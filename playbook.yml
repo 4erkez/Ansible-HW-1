@@ -1,0 +1,103 @@
+---
+- hosts: env
+  become: true
+  vars_files:
+  - vars/vars.yml
+  tasks:
+  
+  - name: Add repository
+    ansible.builtin.dnf:
+      name: epel-release
+      state: latest
+      update_cache: yes  
+
+  - name: Create 'hillel' group
+    ansible.builtin.group:
+      name: "{{ user_group }}"
+      state: present
+
+  - name: Add the user 'student' with a bash shell, appending the group 'hillel' and 'sudo' to the user's groups
+    ansible.builtin.user:
+      name: "{{ user_name }}"
+      password: "{{ user_password }}"
+      shell: /bin/bash
+      groups: hillel,root
+      append: yes
+
+- hosts: app
+  become: true
+  tasks:
+  
+  - name: Install the latest version of Apache
+    ansible.builtin.dnf:
+      name: httpd
+      state: latest
+      update_cache: yes
+  
+  - name: Start Apache and Enable it on the every boot
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+
+- hosts: db
+  become: true
+  vars_files:
+  - vars/vars.yml
+  tasks:
+
+  - name: Install MySQL
+    ansible.builtin.dnf:
+      name: mysql-server
+      state: latest
+      update_cache: yes
+
+  - name: Start the MySQL service
+    service: 
+      name: mysqld 
+      state: started 
+      enabled: true
+    
+  - name: Install Required pip modules
+    pip:
+      name: PyMySQL
+      state: latest
+      executable: pip3   
+    
+  - name: Set the root password
+    mysql_user:
+      name: root
+      password: "{{ mysql_root_password }}"
+      login_unix_socket: /var/lib/mysql/mysql.sock
+
+  - name: Remove all anonymous user accounts
+    mysql_user:
+      name: ''
+      host_all: yes
+      state: absent
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+
+  - name: Remove the MySQL test database
+    mysql_db:
+      name: test
+      state: absent
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+
+  - name: Create database
+    mysql_db:
+      name: "{{ mysql_db }}"
+      state: present
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+
+  - name: Create MySQL user
+    mysql_user:
+      name: "{{ mysql_user }}"
+      password: "{{ mysql_password }}"
+      priv: "{{ mysql_db }}.*:ALL"
+      state: present
+      login_user: root
+      login_password: "{{ mysql_root_password }}"
+...

@@ -1,0 +1,10 @@
+#User Setting
+user_name: "student"
+user_password: "student_pass"
+user_group: "hillel"
+
+#MySQL Settings
+mysql_root_password: "root-password123"
+mysql_db: "homework-db"
+mysql_user: "cherkez"
+mysql_password: "password123"

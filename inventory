@@ -1,0 +1,9 @@
+[app]
+app ansible_host=167.235.29.250
+
+[db]
+db ansible_host=168.119.228.63
+
+[env:children]
+app
+db
